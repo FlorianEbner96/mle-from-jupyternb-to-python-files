@@ -69,7 +69,7 @@ def calculate_last_change(df):
             # Otherwise, keep the renovation year as the last known change.
             last_known_change.append(int(yr_re))
 
-    ["last_known_change"] = last_known_change
+    df["last_known_change"] = last_known_change
 
     df.drop("yr_renovated", axis=1, inplace=True)
     df.drop("yr_built", axis=1, inplace=True)
