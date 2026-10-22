@@ -91,7 +91,7 @@ def fill_missings_view_wf(df):
 
 
 def main() -> None:
-    """Load the teaching dataset and list the starter tasks."""
+    """Run the full reference preprocessing chain on the teaching dataset."""
 
     data_path = (
         Path(__file__).resolve().parents[3]
@@ -99,17 +99,23 @@ def main() -> None:
         / "King_County_House_prices_dataset.csv"
     )
     df = pd.read_csv(data_path)
+    raw_shape = df.shape
 
-    print("King County starter module loaded successfully.")
-    print(
-        "This starter module runs successfully. The four cleaning functions are still yours to implement."
+    cleaned_df = fill_missings_view_wf(
+        calculate_last_change(sqft_basement(bath_bed_ratio_outlier(df)))
     )
-    print(f"Loaded dataset shape: {df.shape}")
-    print("Starter functions to complete:")
-    print("- bath_bed_ratio_outlier(df)")
-    print("- sqft_basement(df)")
-    print("- calculate_last_change(df)")
-    print("- fill_missings_view_wf(df)")
+
+    print("King County solution preprocessing ran successfully.")
+    print(f"Raw shape: {raw_shape}")
+    print(f"Cleaned shape: {cleaned_df.shape}")
+    print(f"Missing `view`: {int(cleaned_df['view'].isna().sum())}")
+    print(
+        f"Missing `waterfront`: {int(cleaned_df['waterfront'].isna().sum())}")
+    print(
+        f"`last_known_change` present: {'last_known_change' in cleaned_df.columns}")
+    print(f"`yr_built` present: {'yr_built' in cleaned_df.columns}")
+    print(f"`yr_renovated` present: {'yr_renovated' in cleaned_df.columns}")
+    print(f"`sqft_basement` dtype: {cleaned_df['sqft_basement'].dtype}")
 
 
 if __name__ == "__main__":
