@@ -27,44 +27,59 @@ def load_data() -> pd.DataFrame:
 
 
 def preprocess(dataframe: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    """Convert raw Titanic rows into model-ready features and labels.
+    # Convert raw Titanic rows into model-ready features and labels.
 
-    Exercise steps:
-    1. Work on a copy of the incoming DataFrame so helper functions stay safe.
-    2. Fill missing values in `Age`, `Fare` and `Embarked`.
-    3. Build `y` from `Survived`.
-    4. Drop columns that are not part of this simple baseline feature set.
-    5. One-hot encode categorical columns and return `(X, y)`.
-    """
+    # Exercise steps:
+    # 1. Work on a copy of the incoming DataFrame so helper functions stay safe.
 
-    # Copy-first is a good default in preprocessing code because it prevents
-    # helper functions from mutating DataFrames owned by the caller.
-    raise NotImplementedError(
-        "Implement preprocess() using the notebook and lesson guide as reference."
-    )
+    df = dataframe.copy()
+
+    # 2. Fill missing values in `Age`, `Fare` and `Embarked`.
+    df["Age"] = df["Age"].fillna(df["Age"].median())
+    df["Fare"] = df["Fare"].fillna(df["Fare"].dropna().median())
+    freq_port = df.Embarked.dropna().mode()[0]
+    df["Embarked"] = df["Embarked"].fillna(freq_port)
+
+    # 3. Build `y` from `Survived`.
+    y = df["Survived"].astype(int)
+
+    # 4. Drop columns that are not part of this simple baseline feature set.
+    features = df.drop(
+        columns=["Survived", "PassengerId", "Name", "Ticket", "Cabin"])
+
+    # 5. One-hot encode categorical columns and return `(X, y)`.
+    X = pd.get_dummies(features, columns=["Sex", "Embarked"], drop_first=True)
+    return X, y
 
 
 def train_and_score_models(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
-    """Train a few baseline models and compare their validation accuracy.
+    # Train a few baseline models and compare their validation accuracy.
 
-    Exercise steps:
-    1. Split `(X, y)` into training and validation sets.
-    2. Fit the baseline models listed below.
-    3. Score each model on the validation split, not on the full training data.
-    4. Return a sorted DataFrame with readable model names and scores.
-    """
-
-    # Keeping the model list imported here makes the exercise self-contained,
-    # even before the function body is implemented.
-    _ = (
-        LogisticRegression,
-        DecisionTreeClassifier,
-        RandomForestClassifier,
-        GaussianNB,
-        train_test_split,
+    # Exercise steps:
+    # 1. Split `(X, y)` into training and validation sets.
+    X_train, X_valid, y_train, y_valid = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
-    raise NotImplementedError(
-        "Implement train_and_score_models() to return a readable score table."
+    # 2. Fit the baseline models listed below.
+    ModelList = {
+        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
+        "Decision Tree": DecisionTreeClassifier(random_state=42),
+        "Random Forest": RandomForestClassifier(n_estimators=200, random_state=42),
+        "Gaussian NB": GaussianNB(),
+    }
+    # 3. Score each model on the validation split, not on the full training data.
+    scores: list[dict[str, float | str]] = []
+    for name, model in ModelList.items():
+        # Fit on the training split, then score on held-out validation data.
+        model.fit(X_train, y_train)
+        score = model.score(X_valid, y_valid)
+        scores.append({"Model": name, "ValidationAccuracy": round(score, 4)})
+
+    # 4. Return a sorted DataFrame with readable model names and scores.
+    return (
+        pd.DataFrame(scores)
+        .sort_values("ValidationAccuracy", ascending=False)
+        .reset_index(drop=True)
     )
 
 
@@ -76,7 +91,8 @@ def main() -> None:
     """
 
     data = load_data()
-    print(f"Loaded Titanic data: {data.shape[0]} rows x {data.shape[1]} columns")
+    print(
+        f"Loaded Titanic data: {data.shape[0]} rows x {data.shape[1]} columns")
     print(
         "This starter module runs successfully, and the two core refactoring steps are still yours to implement."
     )
